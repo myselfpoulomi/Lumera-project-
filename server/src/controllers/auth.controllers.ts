@@ -1,59 +1,107 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import bcrypt from "bcrypt";
 
 async function createUser(req: Request, res: Response) {
+  try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        return res.status(400).json({ message: "All fields are required" });
-    } 
-     const existingUser = await prisma.user.findUnique({
-        where: { email },
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
-        return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({ message: "User already exists" });
     }
 
-    const newUser= await prisma.user.create({
-        data: {
-            name,  
-            email,
-            password, // In production, hash the password before storing
-        },
-        
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
     });
 
-    return res.status(201).json({ message: "User created successfully", user: newUser });
+    return res.status(201).json({
+      message: "User created successfully",
+      user: newUser,
+    });
 
+  } catch (error) {
+    console.error("Create User Error:", error);
 
-
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 }
 
 async function loginUser(req: Request, res: Response) {
     const { email, password } = req.body;   
-        if (!email || !password) {
+
+    try {
+
+    if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
     } 
 
     const existingUser = await prisma.user.findUnique({
         where: { email },
     });
-  if (!existingUser ) {
-        return res.status(401).json({ message: "user does't exits. create new account" });
-}
 
-    if (existingUser.password !== password) {
+    if (!existingUser) {
+        return res.status(401).json({ message: "user does't exits. create new account" });
+    }
+
+    // 🔐 Compare hashed password (only change here)
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+
+    if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
     }
 
-   return res.status(200).json({ message: "Login successful", user: existingUser });
+    return res.status(200).json({ message: "Login successful", user: existingUser }); }
+    catch (error) {
+        console.error("Login User Error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
 }
 
+async function updateUser(req: Request, res: Response) {
+    const { email, name, password } = req.body;   
 
+    try {
 
-  export { createUser , loginUser };
+    const existingUser = await prisma.user.findUnique({
+        where: { email },
+    }); 
 
+    if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+    }       
+       const hashedPassword = await bcrypt.hash(password, 10);
 
+    const updatedUser = await prisma.user.update({
+        where: { email },
+        data: {
+            password: hashedPassword,
+        },
+    });
 
-
+    return res.status(200).json({
+        message: "Password updated successfully",
+        user: updatedUser,
+    }); }
+    catch (error) {
+        console.error("Update User Error:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }   
+}
+export { createUser , loginUser , updateUser};
