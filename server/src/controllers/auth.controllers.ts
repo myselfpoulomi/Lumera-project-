@@ -3,6 +3,8 @@ import { prisma } from "../lib/prisma";
 import bcrypt from "bcrypt";
 import storeOTP from "../lib/storeOTP";
 import mailSender from "../lib/sendemail";
+import verifyOTP from "../lib/verifyOTP";
+
 
 
 async function sendOtp(req: Request, res: Response) {
@@ -34,9 +36,9 @@ async function sendOtp(req: Request, res: Response) {
 
 async function createUser(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password , otp } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !otp) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -44,9 +46,16 @@ async function createUser(req: Request, res: Response) {
       where: { email },
     });
 
+
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
+
+    const verifyOTPResult = await verifyOTP(email, otp);
+    console.log(verifyOTPResult);
+    
+
+
 
     // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);

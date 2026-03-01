@@ -1,11 +1,13 @@
 import { redisClient } from "./redisClient";
 
-interface OTPData {
+
+
+export interface OTPData {
   email: string;
- 
   otp: string;
   timestamp: number;
 }
+
 
 const storeOTP = async (
   email: string,
