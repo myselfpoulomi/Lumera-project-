@@ -148,4 +148,31 @@ async function updateUser(req: Request, res: Response) {
 
 
 
-export { createUser, loginUser, updateUser, sendOtp };
+async function deleteUser(req: Request, res: Response) {
+  const { userId } = req.body;
+
+  try {
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete User Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export { createUser, loginUser, updateUser, sendOtp, deleteUser };

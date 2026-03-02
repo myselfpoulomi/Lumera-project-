@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ const OTP_LENGTH = 4;
 const VerifyOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const email = (location.state as { email?: string })?.email ?? "";
 
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
@@ -101,8 +103,11 @@ const handleVerify = async (e: React.FormEvent) => {
       throw new Error(data.message || "OTP verification failed");
     }
 
+    const { id, name: userName, email: userEmail, createdAt } = data.user;
+    login({ id, name: userName, email: userEmail, createdAt: createdAt ?? new Date().toISOString() });
+
     alert("Account created successfully 🎉");
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
 
   } catch (error: any) {
     alert(error.message || "Something went wrong");

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ type LoginFormData = {
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -49,9 +51,9 @@ const Login = () => {
         throw new Error(data.message || "Login failed");
       }
 
-      console.log("Login success:", data);
+      const { id, name, email, createdAt } = data.user;
+      login({ id, name, email, createdAt: createdAt ?? new Date().toISOString() });
 
-      // ✅ Redirect after successful login
       navigate("/", { replace: true });
 
     } catch (err: any) {

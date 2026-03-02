@@ -1,14 +1,57 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { Search, Heart, ShoppingBag, Menu, X, User, LogOut, Trash2 } from "lucide-react";
 import SearchDialog from "./SearchDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const navLinks = ["Shop", "Skincare", "Makeup", "Collections", "About", "Contact"];
+
+const API_BASE = "http://localhost:3000/api/auth";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${API_BASE}/delete-account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to delete account");
+      logout();
+      setDeleteDialogOpen(false);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
@@ -50,11 +93,44 @@ const Header = () => {
                 2
               </span>
             </Link>
-            <Link to="/signup">
-              <Button variant="hero" size="sm" className="hidden lg:flex ml-2">
-                Signup
-              </Button>
-            </Link>
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/50 ml-2"
+                    aria-label="User menu"
+                  >
+                    <User className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="focus:text-foreground">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete account
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/signup">
+                <Button variant="hero" size="sm" className="hidden lg:flex ml-2">
+                  Signup
+                </Button>
+              </Link>
+            )}
             
             {/* Mobile Menu Button */}
             <button 
@@ -82,11 +158,27 @@ const Header = () => {
                   {link}
                 </Link>
               ))}
-              <Link to="/signup" className="mt-4 w-full">
-                <Button variant="hero" className="w-full">
-                  Signup
-                </Button>
-              </Link>
+              {isAuthenticated && user ? (
+                <div className="mt-4 px-2 py-3 border-t border-border/50 space-y-2">
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <button onClick={logout} className="block text-sm text-foreground hover:underline">
+                    Log out
+                  </button>
+                  <button
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="block text-sm text-destructive hover:underline"
+                  >
+                    Delete account
+                  </button>
+                </div>
+              ) : (
+                <Link to="/signup" className="mt-4 w-full">
+                  <Button variant="hero" className="w-full">
+                    Signup
+                  </Button>
+                </Link>
+              )}
             </div>
           </nav>
         )}
@@ -94,6 +186,28 @@ const Header = () => {
 
       {/* Search Dialog */}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
+      {/* Delete Account Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete account</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your account and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete account"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };
