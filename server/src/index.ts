@@ -1,11 +1,20 @@
 import express, { Request, Response } from "express";
 import authRoutes from "./routers/auth.routes";
+import cors from "cors";
+
 
 const app = express();
 const PORT = 3000;
 
 // Middleware
 app.use(express.json());
+
+app.use(
+  cors({
+    origin: "http://localhost:8080", // your frontend port
+    credentials: true,
+  })
+);
 
 // Health route
 app.get("/", (req: Request, res: Response) => {
