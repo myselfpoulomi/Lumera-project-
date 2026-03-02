@@ -4,6 +4,16 @@ import bcrypt from "bcrypt";
 import storeOTP from "../lib/storeOTP";
 import mailSender from "../lib/sendemail";
 import verifyOTP from "../lib/verifyOTP";
+import { generateToken } from "../lib/jwt";
+import { AuthRequest } from "../middleware/auth.middleware";
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/",
+};
 
 
 
@@ -36,7 +46,7 @@ async function sendOtp(req: Request, res: Response) {
 
 async function createUser(req: Request, res: Response) {
   try {
-    const { name, email, password , otp } = req.body;
+    const { name, email, password, otp } = req.body;
 
     if (!name || !email || !password || !otp) {
       return res.status(400).json({ message: "All fields are required" });
@@ -53,7 +63,7 @@ async function createUser(req: Request, res: Response) {
 
     const verifyOTPResult = await verifyOTP(email, otp);
     console.log(verifyOTPResult);
-    
+
 
 
 
@@ -68,6 +78,8 @@ async function createUser(req: Request, res: Response) {
       },
     });
 
+    const token = generateToken(newUser.id);
+    res.cookie("token", token, COOKIE_OPTIONS);
     return res.status(201).json({
       message: "User created successfully",
       user: newUser,
@@ -106,6 +118,8 @@ async function loginUser(req: Request, res: Response) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    const token = generateToken(existingUser.id);
+    res.cookie("token", token, COOKIE_OPTIONS);
     return res.status(200).json({ message: "Login successful", user: existingUser });
   }
   catch (error) {
@@ -147,13 +161,37 @@ async function updateUser(req: Request, res: Response) {
 }
 
 
+async function getMe(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, name: true, email: true, createdAt: true },
+    });
+    if (!user) {
+      res.clearCookie("token", { path: "/" });
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error("Get Me Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
 
-async function deleteUser(req: Request, res: Response) {
-  const { userId } = req.body;
+async function logoutUser(req: Request, res: Response) {
+  res.clearCookie("token", { path: "/" });
+  return res.status(200).json({ message: "Logged out successfully" });
+}
+
+async function deleteUser(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
 
   try {
     if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -168,6 +206,7 @@ async function deleteUser(req: Request, res: Response) {
       where: { id: userId },
     });
 
+    res.clearCookie("token", { path: "/" });
     return res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Delete User Error:", error);
@@ -175,4 +214,4 @@ async function deleteUser(req: Request, res: Response) {
   }
 }
 
-export { createUser, loginUser, updateUser, sendOtp, deleteUser };
+export { createUser, loginUser, updateUser, sendOtp, deleteUser, getMe, logoutUser };

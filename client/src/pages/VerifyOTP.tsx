@@ -88,6 +88,7 @@ const handleVerify = async (e: React.FormEvent) => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           name,
           email,
@@ -127,6 +128,7 @@ const handleResend = async () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email }),
       }
     );

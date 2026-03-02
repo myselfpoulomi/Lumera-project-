@@ -17,37 +17,49 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (user: User) => void;
   logout: () => void;
   setUser: (user: User | null) => void;
 }
 
-const AUTH_STORAGE_KEY = "lumera_user";
+const API_BASE = "http://localhost:3000/api/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as User;
-        setUserState(parsed);
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/me`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const u = data.user;
+          setUserState({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            createdAt: u.createdAt ?? new Date().toISOString(),
+          });
+        } else {
+          setUserState(null);
+        }
+      } catch {
+        setUserState(null);
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
+    };
+    fetchUser();
   }, []);
 
   const setUser = useCallback((newUser: User | null) => {
     setUserState(newUser);
-    if (newUser) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
   }, []);
 
   const login = useCallback(
@@ -57,13 +69,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [setUser]
   );
 
-  const logout = useCallback(() => {
-    setUser(null);
+  const logout = useCallback(async () => {
+    try {
+      await fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      setUser(null);
+    }
   }, [setUser]);
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
+    isLoading,
     login,
     logout,
     setUser,
