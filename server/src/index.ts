@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routers/auth.routes";
 import cors from "cors";
-
+import adminRoutes from './routers/admin.routes'
 const app = express();
 const PORT = 3000;
 
@@ -25,6 +25,7 @@ app.get("/", (req: Request, res: Response) => {
 
 // Mount routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin",adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
