@@ -13,6 +13,8 @@ interface Product {
   price: number;
   description: string;
   imageUrl?: string;
+  categoryType?: 'skincare' | 'makeup';
+  skinType?: 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL';
 }
 
 interface AdminScreenProps { }
@@ -204,6 +206,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
   const [price, setPrice] = useState(product.price.toString());
   const [description, setDescription] = useState(product.description);
   const [imageUrl, setImageUrl] = useState(product.imageUrl || "");
+  const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(product.categoryType);
+  const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(product.skinType);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const uploadImageMutation = useUploadImage();
@@ -227,6 +231,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
       price: parseFloat(price),
       description,
       imageUrl: newImageUrl,
+      categoryType,
+      skinType,
     });
   };
 
@@ -248,6 +254,35 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="description" className="text-right font-medium text-gray-300">Description</label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 bg-gray-700 border-gray-600 text-gray-100" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="categoryType" className="text-right font-medium text-gray-300">Category Type</label>
+            <select
+              id="categoryType"
+              value={categoryType || ""}
+              onChange={(e) => setCategoryType(e.target.value as 'skincare' | 'makeup')}
+              className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
+            >
+              <option value="">Select Category</option>
+              <option value="skincare">Skincare</option>
+              <option value="makeup">Makeup</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="skinType" className="text-right font-medium text-gray-300">Skin Type</label>
+            <select
+              id="skinType"
+              value={skinType || ""}
+              onChange={(e) => setSkinType(e.target.value as 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL')}
+              className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
+            >
+              <option value="">Select Skin Type</option>
+              <option value="DRY">DRY</option>
+              <option value="OILY">OILY</option>
+              <option value="COMBINATION">COMBINATION</option>
+              <option value="SENSITIVE">SENSITIVE</option>
+              <option value="NORMAL">NORMAL</option>
+            </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="image" className="text-right font-medium text-gray-300">Image</label>
@@ -283,6 +318,8 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(undefined);
+  const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const uploadImageMutation = useUploadImage();
@@ -305,6 +342,8 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
       price: parseFloat(price),
       description,
       imageUrl: newImageUrl,
+      categoryType,
+      skinType,
     });
   };
 
@@ -326,6 +365,35 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="description" className="text-right font-medium text-gray-300">Description</label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3 bg-gray-700 border-gray-600 text-gray-100" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="categoryType" className="text-right font-medium text-gray-300">Category Type</label>
+            <select
+              id="categoryType"
+              value={categoryType || ""}
+              onChange={(e) => setCategoryType(e.target.value as 'skincare' | 'makeup')}
+              className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
+            >
+              <option value="">Select Category</option>
+              <option value="skincare">Skincare</option>
+              <option value="makeup">Makeup</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="skinType" className="text-right font-medium text-gray-300">Skin Type</label>
+            <select
+              id="skinType"
+              value={skinType || ""}
+              onChange={(e) => setSkinType(e.target.value as 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL')}
+              className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
+            >
+              <option value="">Select Skin Type</option>
+              <option value="DRY">DRY</option>
+              <option value="OILY">OILY</option>
+              <option value="COMBINATION">COMBINATION</option>
+              <option value="SENSITIVE">SENSITIVE</option>
+              <option value="NORMAL">NORMAL</option>
+            </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="image" className="text-right font-medium text-gray-300">Image</label>
