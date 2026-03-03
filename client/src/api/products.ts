@@ -1,20 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface Product {
+
+export interface Product {
   id: string;
   name: string;
   price: number;
-  description: string;
-  imageUrl?: string;
-  // Add other product fields as necessary
+  description?: string;
+  img?: string;
+  categoryType: 'skincare' | 'makeup';
+  skinType: 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL';
 }
 
 // Placeholder API functions
 const fetchProducts = async (): Promise<Product[]> => {
   // Replace with actual API call
   return [
-    { id: "1", name: "Product A", price: 29.99, description: "Description A", imageUrl: "https://picsum.photos/id/10/300/200" },
-    { id: "2", name: "Product B", price: 49.99, description: "Description B", imageUrl: "https://picsum.photos/id/20/300/200" },
+    {
+      id: "1", name: "Product A", price: 29.99, description: "Description A", img: "https://picsum.photos/id/10/300/200",
+      categoryType: "skincare",
+      skinType: "DRY"
+    },
+    {
+      id: "2", name: "Product B", price: 49.99, description: "Description B", img: "https://picsum.photos/id/20/300/200",
+      categoryType: "skincare",
+      skinType: "DRY"
+    },
   ];
 };
 
@@ -66,20 +76,40 @@ export const useUploadImage = () => {
   });
 };
 
-const createProduct = async (product: Omit<Product, "id">): Promise<Product> => {
-  console.log("Creating product:", product);
-  // Simulate API call and assign a new ID
-  return new Promise((resolve) =>
-    setTimeout(() => resolve({ id: Date.now().toString(), ...product }), 500)
-  );
-};
+// const createProduct = async (product: Omit<Product, "id">): Promise<Product> => {
+//   // Simulate API call and assign a new ID
+//   return new Promise((resolve) =>
+//     setTimeout(() => resolve({ id: Date.now().toString(), ...product }), 500)
+//   );
+// };
 
 export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
-  return useMutation<Product, Error, Omit<Product, "id">>({
-    mutationFn: createProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+  return useMutation({
+    mutationFn: async (newProduct: Omit<Product, "id">) => {
+      const productWithDefaults = {
+        ...newProduct,
+        categoryType: newProduct.categoryType || 'skincare',
+        skinType: newProduct.skinType || 'NORMAL',
+      };
+      console.log("Product being sent to backend:", productWithDefaults);
+      const response = await fetch(
+        "http://localhost:3000/api/products/create-product",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(productWithDefaults),
+        }
+      );
+      const data = await response.json(); // 👈 important
+
+      if (!response.ok) {
+        console.log("Backend error:", data); // 👈 log it
+        throw new Error(data.message || "Failed to create product");
+      }
+
+      return data;
     },
   });
 };

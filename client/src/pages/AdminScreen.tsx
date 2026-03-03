@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useProducts, useDeleteProduct, useUpdateProduct, useUploadImage, useCreateProduct } from "../api/products";
+import { useProducts, useDeleteProduct, useUpdateProduct, useUploadImage, useCreateProduct, Product } from "../api/products";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
@@ -7,15 +7,6 @@ import { useToast } from "../components/ui/use-toast";
 import { Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  imageUrl?: string;
-  categoryType?: 'skincare' | 'makeup';
-  skinType?: 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL';
-}
 
 interface AdminScreenProps { }
 
@@ -137,9 +128,9 @@ const handleLogout = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products?.map((product) => (
             <div key={product.id} className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300">
-              {product.imageUrl && (
+              {product.img && (
                 <div className="h-48 w-full overflow-hidden flex items-center justify-center bg-gray-700">
-                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                  <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="p-5 flex flex-col flex-grow">
@@ -205,24 +196,24 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(product.price.toString());
   const [description, setDescription] = useState(product.description);
-  const [imageUrl, setImageUrl] = useState(product.imageUrl || "");
+  const [img, setImg] = useState(product.img || "");
   const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(product.categoryType);
   const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(product.skinType);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const uploadImageMutation = useUploadImage();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setImageUrl(URL.createObjectURL(e.target.files[0])); // For preview
-    }
-  };
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files && e.target.files[0]) {
+  //     setImageFile(e.target.files[0]);
+  //     setImageUrl(URL.createObjectURL(e.target.files[0])); // For preview
+  //   }
+  // };
 
   const handleSubmit = async () => {
-    let newImageUrl = imageUrl;
+    let newImg = img;
     if (imageFile) {
-      newImageUrl = await uploadImageMutation.mutateAsync(imageFile);
+      newImg = await uploadImageMutation.mutateAsync(imageFile);
     }
 
     onSave({
@@ -230,7 +221,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
       name,
       price: parseFloat(price),
       description,
-      imageUrl: newImageUrl,
+      img: newImg,
       categoryType,
       skinType,
     });
@@ -264,8 +255,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
               className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
             >
               <option value="">Select Category</option>
-              <option value="skincare">Skincare</option>
-              <option value="makeup">Makeup</option>
+              <option value="SKINCARE">Skincare</option>
+              <option value="MAKEUP">Makeup</option>
             </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -286,12 +277,12 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="image" className="text-right font-medium text-gray-300">Image</label>
-            <Input id="image" type="file" onChange={handleImageChange} className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 file:text-gray-100 file:bg-gray-600 hover:file:bg-gray-500" />
+            <Input id="image" type="file" className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 file:text-gray-100 file:bg-gray-600 hover:file:bg-gray-500" />
           </div>
-          {imageUrl && (
+          {img && (
             <div className="grid grid-cols-4 items-center gap-4">
               <div className="col-span-1"></div>
-              <img src={imageUrl} alt="Product Preview" className="col-span-3 w-32 h-32 object-cover rounded-md shadow-md border border-gray-600" />
+              <img src={img} alt="Product Preview" className="col-span-3 w-32 h-32 object-cover rounded-md shadow-md border border-gray-600" />
             </div>
           )}
         </div>
@@ -317,31 +308,31 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [img, setImg] = useState("");
   const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(undefined);
   const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const uploadImageMutation = useUploadImage();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-      setImageUrl(URL.createObjectURL(e.target.files[0])); // For preview
-    }
-  };
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files && e.target.files[0]) {
+  //     setImageFile(e.target.files[0]);
+  //     setImageUrl(URL.createObjectURL(e.target.files[0])); // For preview
+  //   }
+  // };
 
   const handleSubmit = async () => {
-    let newImageUrl = imageUrl;
+    let newImg = img;
     if (imageFile) {
-      newImageUrl = await uploadImageMutation.mutateAsync(imageFile);
+      newImg = await uploadImageMutation.mutateAsync(imageFile);
     }
 
     onSave({
       name,
       price: parseFloat(price),
       description,
-      imageUrl: newImageUrl,
+      img: newImg,
       categoryType,
       skinType,
     });
@@ -375,8 +366,8 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
               className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
             >
               <option value="">Select Category</option>
-              <option value="skincare">Skincare</option>
-              <option value="makeup">Makeup</option>
+              <option value="SKINCARE">Skincare</option>
+              <option value="MAKEUP">Makeup</option>
             </select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -397,12 +388,12 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="image" className="text-right font-medium text-gray-300">Image</label>
-            <Input id="image" type="file" onChange={handleImageChange} className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 file:text-gray-100 file:bg-gray-600 hover:file:bg-gray-500" />
+            <Input id="image" type="file" className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 file:text-gray-100 file:bg-gray-600 hover:file:bg-gray-500" />
           </div>
-          {imageUrl && (
+          {img && (
             <div className="grid grid-cols-4 items-center gap-4">
               <div className="col-span-1"></div>
-              <img src={imageUrl} alt="Product Preview" className="col-span-3 w-32 h-32 object-cover rounded-md shadow-md border border-gray-600" />
+              <img src={img} alt="Product Preview" className="col-span-3 w-32 h-32 object-cover rounded-md shadow-md border border-gray-600" />
             </div>
           )}
         </div>
