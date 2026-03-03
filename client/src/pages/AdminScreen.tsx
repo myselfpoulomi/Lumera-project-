@@ -5,6 +5,7 @@ import { Input } from "../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { useToast } from "../components/ui/use-toast";
 import { Database } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -14,7 +15,7 @@ interface Product {
   imageUrl?: string;
 }
 
-interface AdminScreenProps {}
+interface AdminScreenProps { }
 
 const AdminScreen: React.FC<AdminScreenProps> = () => {
   const { data: products, isLoading, isError } = useProducts();
@@ -46,6 +47,20 @@ const AdminScreen: React.FC<AdminScreenProps> = () => {
       },
     });
   };
+
+  const navigate = useNavigate();
+
+const handleLogout = () => {
+  localStorage.removeItem("adminToken");
+
+  toast({
+    title: "Logged Out",
+    description: "You have been successfully logged out.",
+    variant: "default",
+  });
+
+  navigate("/admin-login"); // adjust route if needed
+};
 
   const handleUpdate = (product: Product) => {
     setEditingProduct(product);
@@ -117,53 +132,62 @@ const AdminScreen: React.FC<AdminScreenProps> = () => {
           </Button>
         </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products?.map((product) => (
-          <div key={product.id} className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300">
-            {product.imageUrl && (
-              <div className="h-48 w-full overflow-hidden flex items-center justify-center bg-gray-700">
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-              </div>
-            )}
-            <div className="p-5 flex flex-col flex-grow">
-              <h2 className="text-xl font-bold text-gray-100 mb-2">{product.name}</h2>
-              <p className="text-gray-200 text-2xl font-semibold mb-3">${product.price.toFixed(2)}</p>
-              <p className="text-gray-400 text-sm flex-grow line-clamp-3 mb-4">{product.description}</p>
-              <div className="mt-auto flex justify-between space-x-3">
-                <Button
-                  onClick={() => handleUpdate(product)}
-                  variant="outline"
-                  className="flex-1 bg-blue-800 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 border-blue-700"
-                >
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => handleDelete(product.id)}
-                  variant="destructive"
-                  className="flex-1 bg-red-800 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 border-red-700"
-                >
-                  Delete
-                </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products?.map((product) => (
+            <div key={product.id} className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300">
+              {product.imageUrl && (
+                <div className="h-48 w-full overflow-hidden flex items-center justify-center bg-gray-700">
+                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-5 flex flex-col flex-grow">
+                <h2 className="text-xl font-bold text-gray-100 mb-2">{product.name}</h2>
+                <p className="text-gray-200 text-2xl font-semibold mb-3">${product.price.toFixed(2)}</p>
+                <p className="text-gray-400 text-sm flex-grow line-clamp-3 mb-4">{product.description}</p>
+                <div className="mt-auto flex justify-between space-x-3">
+                  <Button
+                    onClick={() => handleUpdate(product)}
+                    variant="outline"
+                    className="flex-1 bg-blue-800 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 border-blue-700"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(product.id)}
+                    variant="destructive"
+                    className="flex-1 bg-red-800 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 border-red-700"
+                  >
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
+          ))}
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+            <Button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg"
+            >
+              Logout
+            </Button>
           </div>
-        ))}
-      </div>
 
-      {isEditModalOpen && editingProduct && (
-        <EditProductModal
-          product={editingProduct}
-          onSave={handleSave}
-          onClose={handleEditModalClose}
-        />
-      )}
+        </div>
 
-      {isCreateModalOpen && (
-        <CreateProductModal
-          onSave={handleCreate}
-          onClose={handleCreateModalClose}
-        />
-      )}
+        {isEditModalOpen && editingProduct && (
+          <EditProductModal
+            product={editingProduct}
+            onSave={handleSave}
+            onClose={handleEditModalClose}
+          />
+        )}
+
+        {isCreateModalOpen && (
+          <CreateProductModal
+            onSave={handleCreate}
+            onClose={handleCreateModalClose}
+          />
+        )}
       </div>
     </div>
   );
@@ -323,7 +347,9 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
           </Button>
         </div>
       </DialogContent>
+
     </Dialog>
+
   );
 };
 

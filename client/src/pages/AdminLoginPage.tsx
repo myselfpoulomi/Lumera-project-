@@ -10,32 +10,48 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      // Simulate API call
-      const response = await new Promise((resolve) => setTimeout(() => {
-        if (email === 'admin@example.com' && password === 'password') {
-          resolve({ success: true, token: 'fake-jwt-token' });
-        } else {
-          resolve({ success: false, message: 'Invalid credentials' });
-        }
-      }, 1500));
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-      if ((response as any).success) {
-        localStorage.setItem('adminToken', (response as any).token);
-        toast.success('Logged in as admin');
-        navigate('/admin'); 
-      } else {
-        toast.error('Login Failed', { description: (response as any).message });
+  try {
+    const response = await fetch(
+      "http://localhost:3000/api/admin/login-admin",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Error', { description: 'An unexpected error occurred.' });
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast.error("Login Failed", {
+        description: data.message || "Invalid credentials",
+      });
+      return;
     }
+
+    // Save JWT token
+    localStorage.setItem("adminToken", data.token);
+
+    toast.success("Logged in as admin");
+    navigate("/admin");
+  } catch (error) {
+    console.error("Login error:", error);
+    toast.error("Error", {
+      description: "Server not reachable",
+    });
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <div style={styles.container}>
@@ -65,6 +81,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = () => {
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+
     </div>
   );
 };
