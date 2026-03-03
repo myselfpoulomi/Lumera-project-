@@ -22,3 +22,28 @@ model Admin {
   updatedAt DateTime @updatedAt
 } 
 
+enum SkinType {
+  DRY
+  OILY
+  COMBINATION
+  SENSITIVE
+  NORMAL
+}
+
+enum CategoryType {
+  SKINCARE
+  MAKEUP
+}
+
+model Product {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  price        Decimal      @db.Decimal(10, 2)
+  img          String?      // optional
+  description  String?      // optional
+  skinType     SkinType
+  categoryType CategoryType
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
