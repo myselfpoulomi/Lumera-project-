@@ -18,6 +18,7 @@ import VerifyOTP from "./pages/VerifyOTP";
 import FindRoutine from "./pages/FindRoutine";
 import NotFound from "./pages/NotFound";
 import AdminScreen from "./pages/AdminScreen";
+import { AdminLoginPage } from "./pages/AdminLoginPage";
 
 const App = () => (
   <AuthProvider>
@@ -40,6 +41,7 @@ const App = () => (
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/find-routine" element={<FindRoutine />} />
         <Route path="/admin" element={<AdminScreen />} />
+        <Route path="/admin-login" element={<AdminLoginPage />} />
         
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
