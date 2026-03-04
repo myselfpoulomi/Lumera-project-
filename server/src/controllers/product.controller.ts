@@ -72,4 +72,31 @@ async function getProductByID(req: Request<{ id: string }>, res: Response) {
     }    
 }
 
-export { createProduct, getProducts, getProductByID};
+async function updateProduct(req: Request<{ id: string }>, res: Response) {
+    const { id } = req.params;
+    const { name, description, price, skinType, categoryType, img } = req.body;
+    try {
+        const existingProduct = await prisma.product.findUnique({ where: { id } });
+        if (!existingProduct) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        const updatedProduct = await prisma.product.update({
+            where: { id },
+            data: {
+                name: name || existingProduct.name,
+                description: description || existingProduct.description,
+                price: price || existingProduct.price,
+                img: img || existingProduct.img,
+                skinType: skinType ? SkinType[skinType as keyof typeof SkinType] : existingProduct.skinType,
+                categoryType: categoryType ? CategoryType[categoryType as keyof typeof CategoryType] : existingProduct.categoryType,
+            },
+        });
+        res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
+    } catch (error: any) {
+        console.error("Error updating product:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export { createProduct, getProducts, getProductByID , updateProduct};
