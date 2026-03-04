@@ -3,7 +3,6 @@ import { prisma } from "../lib/prisma";
 import { SkinType, CategoryType } from "@prisma/client";
 
 
-
 async function createProduct(req: Request, res: Response) {
     const { name, description, price, skinType, categoryType, img } = req.body;
 
@@ -45,4 +44,15 @@ async function createProduct(req: Request, res: Response) {
 
 }
 
-export { createProduct };
+
+async function getProducts(req: Request, res: Response) {
+    try {
+        const products = await prisma.product.findMany();   
+        res.status(200).json(products);
+    } catch (error: any) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }   
+}
+
+export { createProduct, getProducts };
