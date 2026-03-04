@@ -37,9 +37,18 @@ export const useProducts = () => {
 };
 
 const deleteProduct = async (id: string): Promise<void> => {
-  // Replace with actual API call
-  console.log(`Deleting product with id: ${id}`);
-  return new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+  const response = await fetch(
+    `http://localhost:3000/api/products/delete-product/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to delete product");
+  }
+
+  return;
 };
 
 const updateProduct = async (product: Product): Promise<Product> => {
