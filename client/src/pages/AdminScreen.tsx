@@ -22,24 +22,37 @@ const AdminScreen: React.FC<AdminScreenProps> = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id, {
-      onSuccess: () => {
-        toast({
-          title: "Product Deleted",
-          description: "The product has been successfully deleted.",
-          variant: "default",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: `Failed to delete product: ${error.message}`,
-          variant: "destructive",
-        });
-      },
-    });
-  };
+const handleDelete = (id: string) => {
+  toast({
+    title: "Delete Product?",
+    description: "Are you sure you want to delete this product?",
+    variant: "destructive",
+    action: (
+      <Button
+        variant="destructive"
+        onClick={() => {
+          deleteMutation.mutate(id, {
+            onSuccess: () => {
+              toast({
+                title: "Product Deleted",
+                description: "The product has been successfully deleted.",
+              });
+            },
+            onError: (error: Error) => {
+              toast({
+                title: "Error",
+                description: `Failed to delete product: ${error.message}`,
+                variant: "destructive",
+              });
+            },
+          });
+        }}
+      >
+        Confirm
+      </Button>
+    ),
+  });
+};
 
   const navigate = useNavigate();
 
