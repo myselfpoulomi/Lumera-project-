@@ -29,6 +29,13 @@ const fetchProducts = async (): Promise<Product[]> => {
   }));
 };
 
+export const useProducts = () => {
+  return useQuery<Product[], Error>({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+};
+
 const deleteProduct = async (id: string): Promise<void> => {
   // Replace with actual API call
   console.log(`Deleting product with id: ${id}`);
@@ -36,15 +43,30 @@ const deleteProduct = async (id: string): Promise<void> => {
 };
 
 const updateProduct = async (product: Product): Promise<Product> => {
-  // Replace with actual API call
-  console.log(`Updating product with id: ${product.id}`);
-  return new Promise((resolve) => setTimeout(() => resolve(product), 500)); // Simulate API call
-};
+  const response = await fetch(
+    `http://localhost:3000/api/products/update-product/${product.id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: product.name,
+        price: product.price,
+        description: product.description,
+        img: product.img,
+        categoryType: product.categoryType,
+        skinType: product.skinType,
+      }),
+    }
+  );
 
-export const useProducts = () => {
-  return useQuery<Product[], Error>({ queryKey: ["products"], queryFn: fetchProducts });
-};
+  if (!response.ok) {
+    throw new Error("Failed to update product");
+  }
 
+  return response.json();
+};
 export const useDeleteProduct = () => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
