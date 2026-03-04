@@ -7,25 +7,26 @@ export interface Product {
   price: number;
   description?: string;
   img?: string;
-  categoryType: 'skincare' | 'makeup';
+  categoryType: 'SKINCARE' | 'MAKEUP';
   skinType: 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL';
 }
 
-// Placeholder API functions
+
 const fetchProducts = async (): Promise<Product[]> => {
-  // Replace with actual API call
-  return [
-    {
-      id: "1", name: "Product A", price: 29.99, description: "Description A", img: "https://picsum.photos/id/10/300/200",
-      categoryType: "skincare",
-      skinType: "DRY"
-    },
-    {
-      id: "2", name: "Product B", price: 49.99, description: "Description B", img: "https://picsum.photos/id/20/300/200",
-      categoryType: "skincare",
-      skinType: "DRY"
-    },
-  ];
+  const response = await fetch(
+    "http://localhost:3000/api/products/get-products"
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch products");
+  }
+
+  const data = await response.json();
+
+  return data.map((product: any) => ({
+    ...product,
+    price: Number(product.price),
+  }));
 };
 
 const deleteProduct = async (id: string): Promise<void> => {

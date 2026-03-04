@@ -135,7 +135,7 @@ const handleLogout = () => {
               )}
               <div className="p-5 flex flex-col flex-grow">
                 <h2 className="text-xl font-bold text-gray-100 mb-2">{product.name}</h2>
-                <p className="text-gray-200 text-2xl font-semibold mb-3">${product.price.toFixed(2)}</p>
+                <p className="text-gray-200 text-2xl font-semibold mb-3">${Number(product.price).toFixed(2)}</p>
                 <p className="text-gray-400 text-sm flex-grow line-clamp-3 mb-4">{product.description}</p>
                 <div className="mt-auto flex justify-between space-x-3">
                   <Button
@@ -197,7 +197,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
   const [price, setPrice] = useState(product.price.toString());
   const [description, setDescription] = useState(product.description);
   const [img, setImg] = useState(product.img || "");
-  const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(product.categoryType);
+  const [categoryType, setCategoryType] = useState<'SKINCARE' | 'MAKEUP' | undefined>(product.categoryType);
   const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(product.skinType);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -251,7 +251,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ product, onSave, on
             <select
               id="categoryType"
               value={categoryType || ""}
-              onChange={(e) => setCategoryType(e.target.value as 'skincare' | 'makeup')}
+              onChange={(e) => setCategoryType(e.target.value as 'SKINCARE' | 'MAKEUP')}
               className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
             >
               <option value="">Select Category</option>
@@ -309,7 +309,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [img, setImg] = useState("");
-  const [categoryType, setCategoryType] = useState<'skincare' | 'makeup' | undefined>(undefined);
+  const [categoryType, setCategoryType] = useState<'SKINCARE' | 'MAKEUP' | undefined>(undefined);
   const [skinType, setSkinType] = useState<'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL' | undefined>(undefined);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -362,7 +362,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ onSave, onClose
             <select
               id="categoryType"
               value={categoryType || ""}
-              onChange={(e) => setCategoryType(e.target.value as 'skincare' | 'makeup')}
+              onChange={(e) => setCategoryType(e.target.value as 'SKINCARE' | 'MAKEUP')}
               className="col-span-3 bg-gray-700 border-gray-600 text-gray-100 p-2 rounded-md"
             >
               <option value="">Select Category</option>
