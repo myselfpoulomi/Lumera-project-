@@ -116,14 +116,16 @@ export const useUploadImage = () => {
 // };
 
 export const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (newProduct: Omit<Product, "id">) => {
       const productWithDefaults = {
         ...newProduct,
-        categoryType: newProduct.categoryType || 'skincare',
-        skinType: newProduct.skinType || 'NORMAL',
+        categoryType: newProduct.categoryType || "SKINCARE",
+        skinType: newProduct.skinType || "NORMAL",
       };
-      console.log("Product being sent to backend:", productWithDefaults);
+
       const response = await fetch(
         "http://localhost:3000/api/products/create-product",
         {
@@ -134,14 +136,18 @@ export const useCreateProduct = () => {
           body: JSON.stringify(productWithDefaults),
         }
       );
-      const data = await response.json(); // 👈 important
+
+      const data = await response.json();
 
       if (!response.ok) {
-        console.log("Backend error:", data); // 👈 log it
         throw new Error(data.message || "Failed to create product");
       }
 
       return data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };
