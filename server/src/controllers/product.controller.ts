@@ -99,4 +99,19 @@ async function updateProduct(req: Request<{ id: string }>, res: Response) {
     }
 }
 
-export { createProduct, getProducts, getProductByID , updateProduct};
+async function deleteProduct(req: Request<{ id: string }>, res: Response) {
+    const { id } = req.params;
+    try {
+        const existingProduct = await prisma.product.findUnique({ where: { id } });
+        if (!existingProduct) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        await prisma.product.delete({ where: { id } });
+        res.status(200).json({ message: "Product deleted successfully" });
+    } catch (error: any) {
+        console.error("Error deleting product:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export { createProduct, getProducts, getProductByID , updateProduct, deleteProduct};
