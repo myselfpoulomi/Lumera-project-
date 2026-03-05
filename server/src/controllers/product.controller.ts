@@ -114,4 +114,22 @@ async function deleteProduct(req: Request<{ id: string }>, res: Response) {
     }
 }
 
-export { createProduct, getProducts, getProductByID , updateProduct, deleteProduct};
+async function getProductsByCategory(req: Request<{ category: string }>, res: Response) {   
+    const { category } = req.params;
+    try {
+        const mappedCategoryType = CategoryType[category as keyof typeof CategoryType];
+        if (!mappedCategoryType) {
+            return res.status(400).json({ message: `Invalid category provided: ${category}. Expected one of ${Object.keys(CategoryType).join(', ')}` });
+        }   
+        const products = await prisma.product.findMany({
+            where: { categoryType: mappedCategoryType },
+        }); 
+        res.status(200).json(products);
+    }
+    catch (error: any) {
+        console.error("Error fetching products by category:", error);   
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }   
+}
+
+export { createProduct, getProducts, getProductByID , updateProduct, deleteProduct, getProductsByCategory};

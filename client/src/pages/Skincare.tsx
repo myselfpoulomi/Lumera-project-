@@ -1,46 +1,11 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import productSerum from "@/assets/product-serum.jpg";
-
-const skincareProducts = [
-  {
-    name: "HydraGlow Serum",
-    price: "$48",
-    tag: "Best Seller",
-    image: productSerum,
-  },
-  {
-    name: "Glow Essence Toner",
-    price: "$32",
-    tag: "New",
-    image: productSerum,
-  },
-  {
-    name: "Vitamin C Brightening Serum",
-    price: "$52",
-    tag: "Award Winner",
-    image: productSerum,
-  },
-  {
-    name: "Nourishing Night Cream",
-    price: "$45",
-    image: productSerum,
-  },
-  {
-    name: "Gentle Cleansing Foam",
-    price: "$28",
-    image: productSerum,
-  },
-  {
-    name: "Anti-Aging Eye Cream",
-    price: "$38",
-    tag: "Best Seller",
-    image: productSerum,
-  },
-];
+import { useProductsByCategory } from "@/api/products";
+import defaultProductImage from "@/assets/product-serum.jpg";
 
 const Skincare = () => {
+  const { data: products, isLoading, error } = useProductsByCategory("SKINCARE");
   return (
     <div className="min-h-screen">
       <Header />
@@ -88,15 +53,36 @@ const Skincare = () => {
         {/* Products Grid */}
         <section className="py-20 lg:py-32">
           <div className="container px-4 lg:px-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-              {skincareProducts.map((product, index) => (
-                <ProductCard
-                  key={`${product.name}-${index}`}
-                  {...product}
-                  delay={index * 100 + 400}
-                />
-              ))}
-            </div>
+            {isLoading && (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent" />
+              </div>
+            )}
+            {error && (
+              <div className="text-center py-20">
+                <p className="text-destructive font-medium">Failed to load skincare products</p>
+                <p className="text-muted-foreground text-sm mt-1">{error.message}</p>
+              </div>
+            )}
+            {!isLoading && !error && products && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+                {products.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={`₹${product.price}`}
+                    tag={product.categoryType}
+                    image={product.img ?? defaultProductImage}
+                    delay={index * 100 + 400}
+                  />
+                ))}
+              </div>
+            )}
+            {!isLoading && !error && products?.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground">No skincare products available yet.</p>
+              </div>
+            )}
           </div>
         </section>
       </main>

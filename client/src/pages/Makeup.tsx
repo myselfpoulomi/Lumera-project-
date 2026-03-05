@@ -1,63 +1,11 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import productLipstick from "@/assets/product-lipstick.jpg";
-import productFoundation from "@/assets/product-foundation.jpg";
-
-const makeupProducts = [
-  {
-    name: "Velvet Matte Lipstick",
-    price: "$26",
-    tag: "New",
-    image: productLipstick,
-  },
-  {
-    name: "Radiance Foundation",
-    price: "$39",
-    tag: "Award Winner",
-    image: productFoundation,
-  },
-  {
-    name: "Satin Finish Blush",
-    price: "$24",
-    image: productLipstick,
-  },
-  {
-    name: "Perfect Coverage Concealer",
-    price: "$28",
-    tag: "Best Seller",
-    image: productFoundation,
-  },
-  {
-    name: "Bold Red Lipstick",
-    price: "$26",
-    image: productLipstick,
-  },
-  {
-    name: "Natural Finish Foundation",
-    price: "$39",
-    image: productFoundation,
-  },
-  {
-    name: "Glossy Lip Gloss Set",
-    price: "$32",
-    tag: "New",
-    image: productLipstick,
-  },
-  {
-    name: "Matte Eyeshadow Palette",
-    price: "$45",
-    image: productFoundation,
-  },
-  {
-    name: "Long-Lasting Mascara",
-    price: "$22",
-    tag: "Best Seller",
-    image: productLipstick,
-  },
-];
+import { useProductsByCategory } from "@/api/products";
+import defaultProductImage from "@/assets/product-serum.jpg";
 
 const Makeup = () => {
+  const { data: products, isLoading, error } = useProductsByCategory("MAKEUP");
   return (
     <div className="min-h-screen">
       <Header />
@@ -105,15 +53,36 @@ const Makeup = () => {
         {/* Products Grid */}
         <section className="py-20 lg:py-32">
           <div className="container px-4 lg:px-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-              {makeupProducts.map((product, index) => (
-                <ProductCard
-                  key={`${product.name}-${index}`}
-                  {...product}
-                  delay={index * 100 + 400}
-                />
-              ))}
-            </div>
+            {isLoading && (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent" />
+              </div>
+            )}
+            {error && (
+              <div className="text-center py-20">
+                <p className="text-destructive font-medium">Failed to load makeup products</p>
+                <p className="text-muted-foreground text-sm mt-1">{error.message}</p>
+              </div>
+            )}
+            {!isLoading && !error && products && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+                {products.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={`₹${product.price}`}
+                    tag={product.categoryType}
+                    image={product.img ?? defaultProductImage}
+                    delay={index * 100 + 400}
+                  />
+                ))}
+              </div>
+            )}
+            {!isLoading && !error && products?.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground">No makeup products available yet.</p>
+              </div>
+            )}
           </div>
         </section>
       </main>

@@ -1,38 +1,49 @@
+import axios from "axios";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 
 export interface Product {
   id: string;
   name: string;
-  price: number;
-  description?: string;
-  img?: string;
-  categoryType: 'SKINCARE' | 'MAKEUP';
-  skinType: 'DRY' | 'OILY' | 'COMBINATION' | 'SENSITIVE' | 'NORMAL';
+  price: number|string;
+  description?: string | null;
+  img?: string | null;
+  categoryType: "SKINCARE" | "MAKEUP";
+  skinType: "DRY" | "OILY" | "COMBINATION" | "SENSITIVE" | "NORMAL";
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-
 const fetchProducts = async (): Promise<Product[]> => {
-  const response = await fetch(
+  const { data } = await axios.get<Product[]>(
     "http://localhost:3000/api/products/get-products"
   );
+  return data;
+};
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch products");
-  }
-
-  const data = await response.json();
-
-  return data.map((product: any) => ({
-    ...product,
-    price: Number(product.price),
-  }));
+const fetchProductsByCategory = async (category: string): Promise<Product[]> => {
+  const { data } = await axios.get<Product[]>(
+    `http://localhost:3000/api/products/get-products/category/${category}`
+  );
+  return data;
 };
 
 export const useProducts = () => {
   return useQuery<Product[], Error>({
     queryKey: ["products"],
     queryFn: fetchProducts,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+};
+
+export const useProductsByCategory = (category: string) => {
+  return useQuery<Product[], Error>({
+    queryKey: ["products", "category", category],
+    queryFn: () => fetchProductsByCategory(category),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 };
 
