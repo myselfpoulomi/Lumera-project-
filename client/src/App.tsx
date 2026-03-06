@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import Skincare from "./pages/Skincare";
 import Makeup from "./pages/Makeup";
-import Collections from "./pages/Collections";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Wishlist from "./pages/Wishlist";
@@ -31,7 +30,6 @@ const App = () => (
         <Route path="/shop" element={<Shop />} />
         <Route path="/skincare" element={<Skincare />} />
         <Route path="/makeup" element={<Makeup />} />
-        <Route path="/collections" element={<Collections />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/wishlist" element={<Wishlist />} />

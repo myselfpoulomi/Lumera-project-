@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const navLinks = ["Shop", "Skincare", "Makeup", "Collections", "About", "Contact"];
+const navLinks = ["Shop", "Skincare", "Makeup", "About", "Contact"];
 
 const API_BASE = "http://localhost:3000/api/auth";
 
