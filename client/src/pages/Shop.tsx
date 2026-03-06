@@ -1,11 +1,31 @@
+import axios from "axios";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/api/products";
+import { useAddToCart } from "@/api/cart";
 import defaultProductImage from "@/assets/product-serum.jpg";
 
 const Shop = () => {
   const { data: products, isLoading, error } = useProducts();
+  const addToCart = useAddToCart();
+
+  const handleAddToCart = (productId: string) => {
+    addToCart.mutate(
+      { productId },
+      {
+        onSuccess: () => toast.success("Added to cart"),
+        onError: (err) => {
+          if (axios.isAxiosError(err) && err.response?.status === 401) {
+            toast.error("Please login to add items to cart");
+          } else {
+            toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+          }
+        },
+      }
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -52,6 +72,8 @@ const Shop = () => {
                     tag={product.categoryType}
                     image={product.img ?? defaultProductImage}
                     delay={index * 100}
+                    productId={product.id}
+                    onAddToCart={handleAddToCart}
                   />
                 ))}
               </div>

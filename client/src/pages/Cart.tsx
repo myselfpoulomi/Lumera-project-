@@ -6,59 +6,103 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
-import productSerum from "@/assets/product-serum.jpg";
-import productLipstick from "@/assets/product-lipstick.jpg";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: "1",
-    name: "HydraGlow Serum",
-    price: 48,
-    image: productSerum,
-    quantity: 1,
-  },
-  {
-    id: "2",
-    name: "Velvet Matte Lipstick",
-    price: 26,
-    image: productLipstick,
-    quantity: 2,
-  },
-];
+import defaultProductImage from "@/assets/product-serum.jpg";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useCart,
+  useUpdateCartItem,
+  useRemoveCartItem,
+  type CartItem,
+} from "@/api/cart";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const { isAuthenticated } = useAuth();
+  const { data, isLoading, error } = useCart(isAuthenticated);
+  const updateQuantity = useUpdateCartItem();
+  const removeItem = useRemoveCartItem();
   const [promoCode, setPromoCode] = useState("");
 
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
+  const cartItems: CartItem[] = data?.items ?? [];
+
+  const handleUpdateQuantity = (item: CartItem, change: number) => {
+    const newQty = Math.max(1, item.quantity + change);
+    updateQuantity.mutate({ itemId: item.id, quantity: newQty });
   };
 
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const handleRemoveItem = (itemId: string) => {
+    removeItem.mutate(itemId);
+  };
+
+  const getPrice = (item: CartItem): number => {
+    const p = item.product.price;
+    return typeof p === "string" ? parseFloat(p) : Number(p);
   };
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + getPrice(item) * item.quantity,
     0
   );
   const shipping = subtotal > 100 ? 0 : 10;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <main className="pt-20 lg:pt-24">
+          <section className="py-20 lg:py-32">
+            <div className="container px-4 lg:px-8 text-center">
+              <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-6" />
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-4">
+                Login to view your cart
+              </h2>
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Please sign in to add items to your cart and proceed to checkout.
+              </p>
+              <Link to="/login">
+                <Button variant="hero" size="lg">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <main className="pt-20 lg:pt-24 flex justify-center items-center py-32">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <main className="pt-20 lg:pt-24">
+          <section className="py-20 lg:py-32">
+            <div className="container px-4 lg:px-8 text-center">
+              <p className="text-destructive font-medium mb-4">
+                Failed to load cart
+              </p>
+              <p className="text-muted-foreground text-sm">{error.message}</p>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -104,8 +148,8 @@ const Cart = () => {
                         {/* Product Image */}
                         <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.product.img ?? defaultProductImage}
+                            alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -114,10 +158,10 @@ const Cart = () => {
                         <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           <div className="flex-1">
                             <h3 className="font-display text-lg font-semibold text-foreground mb-2">
-                              {item.name}
+                              {item.product.name}
                             </h3>
                             <p className="text-lg font-semibold text-accent">
-                              ${item.price.toFixed(2)}
+                              ₹{getPrice(item).toFixed(2)}
                             </p>
                           </div>
 
@@ -125,8 +169,9 @@ const Cart = () => {
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 border border-border rounded-lg">
                               <button
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="p-2 hover:bg-muted transition-colors"
+                                onClick={() => handleUpdateQuantity(item, -1)}
+                                disabled={updateQuantity.isPending}
+                                className="p-2 hover:bg-muted transition-colors disabled:opacity-50"
                                 aria-label="Decrease quantity"
                               >
                                 <Minus className="w-4 h-4" />
@@ -135,8 +180,9 @@ const Cart = () => {
                                 {item.quantity}
                               </span>
                               <button
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="p-2 hover:bg-muted transition-colors"
+                                onClick={() => handleUpdateQuantity(item, 1)}
+                                disabled={updateQuantity.isPending}
+                                className="p-2 hover:bg-muted transition-colors disabled:opacity-50"
                                 aria-label="Increase quantity"
                               >
                                 <Plus className="w-4 h-4" />
@@ -144,8 +190,9 @@ const Cart = () => {
                             </div>
 
                             <button
-                              onClick={() => removeItem(item.id)}
-                              className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                              onClick={() => handleRemoveItem(item.id)}
+                              disabled={removeItem.isPending}
+                              className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
                               aria-label="Remove item"
                             >
                               <Trash2 className="w-5 h-5" />
@@ -157,7 +204,7 @@ const Cart = () => {
                       {/* Item Total */}
                       <div className="mt-4 pt-4 border-t border-border flex justify-end">
                         <p className="text-lg font-semibold text-foreground">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(getPrice(item) * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -195,19 +242,19 @@ const Cart = () => {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between text-muted-foreground">
                         <span>Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>₹{subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
                         <span>Shipping</span>
-                        <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
+                        <span>{shipping === 0 ? "Free" : `₹${shipping.toFixed(2)}`}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
                         <span>Tax</span>
-                        <span>${tax.toFixed(2)}</span>
+                        <span>₹{tax.toFixed(2)}</span>
                       </div>
                       {subtotal < 100 && (
                         <p className="text-sm text-muted-foreground">
-                          Add ${(100 - subtotal).toFixed(2)} more for free shipping
+                          Add ₹{(100 - subtotal).toFixed(2)} more for free shipping
                         </p>
                       )}
                     </div>
@@ -220,7 +267,7 @@ const Cart = () => {
                         Total
                       </span>
                       <span className="font-display text-2xl font-semibold text-accent">
-                        ${total.toFixed(2)}
+                        ₹{total.toFixed(2)}
                       </span>
                     </div>
 
@@ -245,7 +292,7 @@ const Cart = () => {
                   Your cart is empty
                 </h2>
                 <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                  Looks like you haven't added anything to your cart yet. Start shopping to fill it up!
+                  Looks like you haven&apos;t added anything to your cart yet. Start shopping to fill it up!
                 </p>
                 <Link to="/shop">
                   <Button variant="hero" size="lg">

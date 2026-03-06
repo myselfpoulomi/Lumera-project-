@@ -7,10 +7,11 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(cuid()) @db.Text
   name      String
   email     String   @unique
-  password  String 
+  password  String
+  cart      Cart?
   createdAt DateTime @default(now())
 }
 
@@ -36,7 +37,7 @@ enum CategoryType {
 }
 
 model Product {
-  id           String       @id @default(uuid()) @db.Uuid
+  id           String       @id @default(cuid()) @db.Text
   name         String
   price        Decimal      @db.Decimal(10, 2)
   img          String?      // optional
@@ -44,6 +45,31 @@ model Product {
   skinType     SkinType
   categoryType CategoryType
 
+  cartItems    CartItem[]
+
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 }
+
+model Cart {
+  id        String     @id @default(cuid()) @db.Text
+  userId    String     @unique @db.Text
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid()) @db.Text
+  cartId    String   @db.Text
+  productId String   @db.Text
+  quantity  Int      @default(1)
+
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+

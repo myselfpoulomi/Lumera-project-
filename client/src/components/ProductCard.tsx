@@ -7,9 +7,19 @@ interface ProductCardProps {
   tag?: string;
   image: string;
   delay?: number;
+  productId?: string;
+  onAddToCart?: (productId: string) => void;
 }
 
-const ProductCard = ({ name, price, tag, image, delay = 0 }: ProductCardProps) => {
+const ProductCard = ({
+  name,
+  price,
+  tag,
+  image,
+  delay = 0,
+  productId,
+  onAddToCart,
+}: ProductCardProps) => {
   return (
     <div 
       className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-500 animate-fade-up opacity-0"
@@ -41,7 +51,15 @@ const ProductCard = ({ name, price, tag, image, delay = 0 }: ProductCardProps) =
         
         {/* Quick Add Button */}
         <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          <Button variant="glossy" className="w-full">
+          <Button
+            variant="glossy"
+            className="w-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (productId && onAddToCart) onAddToCart(productId);
+            }}
+            disabled={!productId || !onAddToCart}
+          >
             Add to Cart
           </Button>
         </div>
