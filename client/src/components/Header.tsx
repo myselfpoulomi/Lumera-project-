@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Heart, ShoppingBag, Menu, X, User, LogOut, Trash2 } from "lucide-react";
 import SearchDialog from "./SearchDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/api/cart";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,8 @@ const Header = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { data: cartData } = useCart(isAuthenticated);
+  const cartCount = cartData?.items?.length ?? 0;
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -89,9 +92,11 @@ const Header = () => {
             </Link>
             <Link to="/cart" className="p-2 text-muted-foreground hover:text-foreground transition-colors relative" aria-label="Cart">
               <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent text-accent-foreground text-[10px] font-semibold rounded-full flex items-center justify-center">
-                2
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-1 bg-accent text-accent-foreground text-[10px] font-semibold rounded-full flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
             </Link>
             {isAuthenticated && user ? (
               <DropdownMenu>
