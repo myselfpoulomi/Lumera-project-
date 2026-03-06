@@ -1,31 +1,49 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+import { toast } from "sonner";
 import ProductCard from "./ProductCard";
-import productSerum from "@/assets/product-serum.jpg";
-import productLipstick from "@/assets/product-lipstick.jpg";
-import productFoundation from "@/assets/product-foundation.jpg";
+import { useProducts } from "@/api/products";
+import { useAddToCart } from "@/api/cart";
+import type { Product } from "@/api/products";
+import defaultProductImage from "@/assets/product-serum.jpg";
 
-const products = [
-  {
-    name: "HydraGlow Serum",
-    price: "$48",
-    tag: "Best Seller",
-    image: productSerum,
-  },
-  {
-    name: "Velvet Matte Lipstick",
-    price: "$26",
-    tag: "New",
-    image: productLipstick,
-  },
-  {
-    name: "Radiance Foundation",
-    price: "$39",
-    tag: "Award Winner",
-    image: productFoundation,
-  },
-];
+const FEATURED_COUNT = 5;
+
+function shuffleAndTake<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
 const FeaturedProducts = () => {
+  const { data: products, isLoading, error } = useProducts();
+  const addToCart = useAddToCart();
+
+  const featuredProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return shuffleAndTake(products, Math.min(FEATURED_COUNT, products.length));
+  }, [products]);
+
+  const handleAddToCart = (productId: string) => {
+    addToCart.mutate(
+      { productId },
+      {
+        onSuccess: () => toast.success("Added to cart"),
+        onError: (err) => {
+          if (axios.isAxiosError(err) && err.response?.status === 401) {
+            toast.error("Please login to add items to cart");
+          } else {
+            toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+          }
+        },
+      }
+    );
+  };
+
   return (
     <section className="py-20 lg:py-32">
       <div className="container px-4 lg:px-8">
@@ -43,15 +61,37 @@ const FeaturedProducts = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-          {products.map((product, index) => (
-            <ProductCard
-              key={product.name}
-              {...product}
-              delay={index * 150 + 200}
-            />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent" />
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">Failed to load featured products</p>
+          </div>
+        )}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+            {featuredProducts.map((product: Product, index: number) => (
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                price={`₹${product.price}`}
+                tag={product.categoryType}
+                image={product.img ?? defaultProductImage}
+                delay={index * 150 + 200}
+                productId={product.id}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
+        )}
+        {!isLoading && !error && featuredProducts.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">No products available yet.</p>
+          </div>
+        )}
 
         {/* View All Button */}
         <div className="text-center mt-12 animate-fade-up opacity-0" style={{ animationDelay: '700ms', animationFillMode: 'forwards' }}>
