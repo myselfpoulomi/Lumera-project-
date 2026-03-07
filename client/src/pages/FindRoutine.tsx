@@ -1,116 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import axios from "axios";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
-import productSerum from "@/assets/product-serum.jpg";
-import productLipstick from "@/assets/product-lipstick.jpg";
-import productFoundation from "@/assets/product-foundation.jpg";
+import { useProductsBySkinType } from "@/api/products";
+import { useAddToCart } from "@/api/cart";
+import defaultProductImage from "@/assets/product-serum.jpg";
 
 type SkinType = "dry" | "oily" | "combination" | "sensitive" | "normal" | null;
-
-interface Product {
-  name: string;
-  price: string;
-  tag?: string;
-  image: string;
-  skinTypes: SkinType[];
-  category: "skincare" | "makeup";
-}
-
-const allProducts: Product[] = [
-  {
-    name: "HydraGlow Serum",
-    price: "$48",
-    tag: "Best Seller",
-    image: productSerum,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "skincare",
-  },
-  {
-    name: "Velvet Matte Lipstick",
-    price: "$26",
-    tag: "New",
-    image: productLipstick,
-    skinTypes: ["dry", "oily", "combination", "normal", "sensitive"],
-    category: "makeup",
-  },
-  {
-    name: "Radiance Foundation",
-    price: "$39",
-    tag: "Award Winner",
-    image: productFoundation,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "makeup",
-  },
-  {
-    name: "Glow Essence Toner",
-    price: "$32",
-    tag: "New",
-    image: productSerum,
-    skinTypes: ["oily", "combination", "normal"],
-    category: "skincare",
-  },
-  {
-    name: "Satin Finish Blush",
-    price: "$24",
-    image: productLipstick,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "makeup",
-  },
-  {
-    name: "Perfect Coverage Concealer",
-    price: "$28",
-    tag: "Best Seller",
-    image: productFoundation,
-    skinTypes: ["oily", "combination", "normal"],
-    category: "makeup",
-  },
-  {
-    name: "Vitamin C Brightening Serum",
-    price: "$52",
-    image: productSerum,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "skincare",
-  },
-  {
-    name: "Bold Red Lipstick",
-    price: "$26",
-    image: productLipstick,
-    skinTypes: ["dry", "oily", "combination", "normal", "sensitive"],
-    category: "makeup",
-  },
-  {
-    name: "Natural Finish Foundation",
-    price: "$39",
-    image: productFoundation,
-    skinTypes: ["oily", "combination", "normal"],
-    category: "makeup",
-  },
-  {
-    name: "Nourishing Night Cream",
-    price: "$45",
-    image: productSerum,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "skincare",
-  },
-  {
-    name: "Gentle Cleansing Foam",
-    price: "$28",
-    image: productSerum,
-    skinTypes: ["sensitive", "normal", "dry"],
-    category: "skincare",
-  },
-  {
-    name: "Anti-Aging Eye Cream",
-    price: "$38",
-    tag: "Best Seller",
-    image: productSerum,
-    skinTypes: ["dry", "normal", "sensitive"],
-    category: "skincare",
-  },
-];
 
 const skinTypes = [
   { id: "dry", label: "Dry", description: "Tight, flaky, or rough texture" },
@@ -124,9 +23,15 @@ const FindRoutine = () => {
   const [selectedSkinType, setSelectedSkinType] = useState<SkinType>(null);
   const [showResults, setShowResults] = useState(false);
 
+  const skinTypeForApi = selectedSkinType?.toUpperCase() ?? "";
+  const shouldFetch = showResults && !!selectedSkinType;
+  const { data: products = [], isLoading, error } = useProductsBySkinType(skinTypeForApi, {
+    enabled: shouldFetch,
+  });
+  const addToCart = useAddToCart();
+
   const handleSkinTypeSelect = (skinType: SkinType) => {
     setSelectedSkinType(skinType);
-    // Store in localStorage
     if (skinType) {
       localStorage.setItem("skinType", skinType);
     }
@@ -138,12 +43,24 @@ const FindRoutine = () => {
     }
   };
 
-  const filteredProducts = selectedSkinType
-    ? allProducts.filter((product) => product.skinTypes.includes(selectedSkinType))
-    : [];
+  const handleAddToCart = (productId: string) => {
+    addToCart.mutate(
+      { productId },
+      {
+        onSuccess: () => toast.success("Added to cart"),
+        onError: (err) => {
+          if (axios.isAxiosError(err) && err.response?.status === 401) {
+            toast.error("Please login to add items to cart");
+          } else {
+            toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+          }
+        },
+      }
+    );
+  };
 
-  const skincareProducts = filteredProducts.filter((p) => p.category === "skincare");
-  const makeupProducts = filteredProducts.filter((p) => p.category === "makeup");
+  const skincareProducts = products.filter((p) => p.categoryType === "SKINCARE");
+  const makeupProducts = products.filter((p) => p.categoryType === "MAKEUP");
 
   // Load saved skin type on mount
   useEffect(() => {
@@ -246,8 +163,27 @@ const FindRoutine = () => {
                 </div>
               </div>
 
+              {/* Loading State */}
+              {isLoading && (
+                <div className="flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent" />
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !isLoading && (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground mb-4">
+                    Failed to load products. Please try again.
+                  </p>
+                  <Button variant="outline" onClick={() => setShowResults(false)}>
+                    Change Selection
+                  </Button>
+                </div>
+              )}
+
               {/* Skincare Products */}
-              {skincareProducts.length > 0 && (
+              {!isLoading && !error && skincareProducts.length > 0 && (
                 <div className="max-w-6xl mx-auto mb-16">
                   <div className="mb-8 animate-fade-up opacity-0" style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}>
                     <h2 className="font-display text-3xl font-semibold text-foreground mb-2">
@@ -260,12 +196,14 @@ const FindRoutine = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
                     {skincareProducts.map((product, index) => (
                       <ProductCard
-                        key={`${product.name}-${index}`}
+                        key={product.id}
                         name={product.name}
-                        price={product.price}
-                        tag={product.tag}
-                        image={product.image}
+                        price={`₹${product.price}`}
+                        tag={product.categoryType}
+                        image={product.img ?? defaultProductImage}
                         delay={index * 100 + 300}
+                        productId={product.id}
+                        onAddToCart={handleAddToCart}
                       />
                     ))}
                   </div>
@@ -273,7 +211,7 @@ const FindRoutine = () => {
               )}
 
               {/* Makeup Products */}
-              {makeupProducts.length > 0 && (
+              {!isLoading && !error && makeupProducts.length > 0 && (
                 <div className="max-w-6xl mx-auto">
                   <div className="mb-8 animate-fade-up opacity-0" style={{ animationDelay: `${400 + skincareProducts.length * 100}ms`, animationFillMode: 'forwards' }}>
                     <h2 className="font-display text-3xl font-semibold text-foreground mb-2">
@@ -286,12 +224,14 @@ const FindRoutine = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
                     {makeupProducts.map((product, index) => (
                       <ProductCard
-                        key={`${product.name}-${index}`}
+                        key={product.id}
                         name={product.name}
-                        price={product.price}
-                        tag={product.tag}
-                        image={product.image}
+                        price={`₹${product.price}`}
+                        tag={product.categoryType}
+                        image={product.img ?? defaultProductImage}
                         delay={index * 100 + 500 + skincareProducts.length * 100}
+                        productId={product.id}
+                        onAddToCart={handleAddToCart}
                       />
                     ))}
                   </div>
@@ -299,7 +239,7 @@ const FindRoutine = () => {
               )}
 
               {/* Empty State */}
-              {filteredProducts.length === 0 && (
+              {!isLoading && !error && products.length === 0 && (
                 <div className="text-center py-20 animate-fade-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                   <p className="text-muted-foreground mb-4">
                     No products found for {selectedSkinType} skin type.

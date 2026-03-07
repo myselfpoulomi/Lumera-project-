@@ -54,10 +54,11 @@ export const useProductsByCategory = (category: string) => {
   });
 };
 
-export const useProductsBySkinType = (skinType: string) => {
+export const useProductsBySkinType = (skinType: string, options?: { enabled?: boolean }) => {
   return useQuery<Product[], Error>({
     queryKey: ["products", "skinType", skinType],
     queryFn: () => fetchProductsBySkinType(skinType),
+    enabled: options?.enabled ?? !!skinType,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
