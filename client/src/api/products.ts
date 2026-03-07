@@ -27,6 +27,13 @@ const fetchProductsByCategory = async (category: string): Promise<Product[]> => 
   return data;
 };
 
+const fetchProductsBySkinType = async (skinType: string): Promise<Product[]> => {
+  const { data } = await axios.get<Product[]>(
+    `http://localhost:3000/api/products/get-products/skin-type/${skinType}`
+  );
+  return data;
+};
+
 export const useProducts = () => {
   return useQuery<Product[], Error>({
     queryKey: ["products"],
@@ -41,6 +48,16 @@ export const useProductsByCategory = (category: string) => {
   return useQuery<Product[], Error>({
     queryKey: ["products", "category", category],
     queryFn: () => fetchProductsByCategory(category),
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+};
+
+export const useProductsBySkinType = (skinType: string) => {
+  return useQuery<Product[], Error>({
+    queryKey: ["products", "skinType", skinType],
+    queryFn: () => fetchProductsBySkinType(skinType),
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,

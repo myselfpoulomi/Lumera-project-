@@ -132,4 +132,23 @@ async function getProductsByCategory(req: Request<{ category: string }>, res: Re
     }   
 }
 
-export { createProduct, getProducts, getProductByID , updateProduct, deleteProduct, getProductsByCategory};
+async function getProductsBySkinType(req: Request<{ skinType: string }>, res: Response) {
+    const { skinType } = req.params;
+    try {
+        const mappedSkinType = SkinType[skinType.toUpperCase() as keyof typeof SkinType];
+        if (!mappedSkinType) {
+            return res.status(400).json({
+                message: `Invalid skinType provided: ${skinType}. Expected one of ${Object.keys(SkinType).join(", ")}`,
+            });
+        }
+        const products = await prisma.product.findMany({
+            where: { skinType: mappedSkinType },
+        });
+        res.status(200).json(products);
+    } catch (error: any) {
+        console.error("Error fetching products by skin type:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+}
+
+export { createProduct, getProducts, getProductByID , updateProduct, deleteProduct, getProductsByCategory, getProductsBySkinType };
